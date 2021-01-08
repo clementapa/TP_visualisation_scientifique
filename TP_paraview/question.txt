@@ -1,0 +1,3 @@
+shading = ombre
+comment les ombres sont calculé 
+question 3 il manque les normales pour calculer le shading
