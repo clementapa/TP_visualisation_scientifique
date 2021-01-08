@@ -6,7 +6,7 @@
 
 #IncludeRegexTransform: 
 
-/home/clement/Cours/5A/Visualisation_scientifique/TP1/main.cpp
+/home/clement/Cours/5A/Visualisation_scientifique/TP_visualisation_scientifique/TP1/main.cpp
 iostream
 -
 vtkPoints.h
