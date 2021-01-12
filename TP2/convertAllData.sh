@@ -5,8 +5,8 @@ for i in data/*; do
   for j in ${i}/*-triangulation; do
     echo "Converting ${j}/data.tri..."
     build/paraviewConversion -t ${j}/data.tri
-    mkdir -p ${j/data/convertedData/} 
-    mv output.vtu ${j/data/convertedData/}
+    mkdir -p convertedData/${j}
+    mv output.vtu convertedData/${j}
   done
 
   # converting grids
@@ -20,7 +20,7 @@ for i in data/*; do
       ID=`echo "$ID + 1" | bc`
     done
     build/paraviewConversion -g $CONFIG ${ATTRIBUTE_LIST}
-    mkdir -p ${j/data/convertedData/}
-    mv output.vti ${j/data/convertedData/}
+    mkdir -p convertedData/${j}
+    mv output.vti convertedData/${j}
   done
 done

@@ -5,6 +5,8 @@
  * date:                  July 2014.
  */
 
+// Fait par Clément Apavou
+
 #include <Debug.h>
 #include <vtkType.h>
 #include <vtkUnstructuredGrid.h>

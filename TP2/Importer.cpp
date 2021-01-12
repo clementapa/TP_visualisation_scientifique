@@ -5,6 +5,8 @@
  * date:                  July 2014.
  */
 
+// Fait par Clément Apavou
+
 #include <Importer.h>
 
 Importer::Importer(){
@@ -50,7 +52,7 @@ int Importer::readRegularGrid(const vector<string> &fileNames){
     
     string line;
     ifstream myfile;
-    myfile.open(fileNames[0]);
+    myfile.open(fileNames[0].c_str());
     string type;
     int temp;
     int nb_file = 0;
@@ -73,7 +75,7 @@ int Importer::readRegularGrid(const vector<string> &fileNames){
             NbvertexData_*=temp;
         }
         myfile.close();
-        
+    
         vertexData_.resize(NbvertexData_);
         for(unsigned int i = 0; i < vertexData_.size(); i++)
         {
@@ -92,7 +94,7 @@ int Importer::readRegularGrid(const vector<string> &fileNames){
                 file.close(); 
             }
         }
-        else if(type == "unsigned char"){
+        else if(type == "unsigned_char"){
             for(int i = 0; i < numberOfComponents_; i++){
                 ifstream file(fileNames[i+1]);
                 vector<unsigned char> vector_unsignedchar(NbvertexData_);
@@ -117,7 +119,7 @@ int Importer::readRegularGrid(const vector<string> &fileNames){
             }            
         }
     }
-    else cout << "Unable to open file"; 
+    else cout << "Unable to open file"<< endl; 
     
     cout << "[Importer] Input regular grid read in "
         << t.getElapsedTime() << " s." << endl;
@@ -131,7 +133,7 @@ int Importer::readRegularGrid(const vector<string> &fileNames){
         cout << "x" << gridSize_[i];
         }
     }
-
+    cout << endl;
     cout << "[Importer] Number of data components: " << numberOfComponents_<< endl;  
         
     return 0;
@@ -184,7 +186,7 @@ int Importer::readTriangulation(const string &fileName){
     
         myfile.close();
     }
-    else cout << "Unable to open file"; 
+    else cout << "Unable to open file"<< endl; 
         
     cout << "[Importer] Input triangulation read in "
         << t.getElapsedTime() << " s." << endl;
@@ -214,15 +216,22 @@ int Importer::writeVtkRegularGrid(const string &fileName){
     else if(dimension_== 3)
         imageData-> SetDimensions(gridSize_[0],gridSize_[1],gridSize_[2]); 
     
-    array_->SetNumberOfComponents(numberOfComponents_); 
+    if(numberOfComponents_ == 2){// pour vectorFields/2-grid
+        for(unsigned int i = 0; i < vertexData_.size(); i++)
+            vertexData_[i].push_back(0);
+        array_->SetNumberOfComponents(3); 
+    }
+    else
+        array_->SetNumberOfComponents(numberOfComponents_); 
+    
     array_->SetNumberOfTuples(vertexData_.size()); 
     
-    for (unsigned int i = 0; i < vertexData_.size(); i++)
-        array_->SetTuple(i,(vertexData_[i]).data()); 
+    for (unsigned int i = 0; i < vertexData_.size(); i++)   
+        array_->SetTuple(i,(vertexData_[i]).data());
     
     if(numberOfComponents_ == 1)
         imageData->GetPointData()->SetScalars(array_);
-    else if(numberOfComponents_ == 3) 
+    else if(numberOfComponents_ == 3 or numberOfComponents_ == 2) // == 2 pour vectorFields/2-grid
         imageData->GetPointData()->SetVectors(array_);
     else if (numberOfComponents_ == 9) 
         imageData->GetPointData()->SetTensors(array_); 
@@ -251,7 +260,7 @@ int Importer::writeVtkTriangulation(const string &fileName){
     vtkIdList* list_ = vtkIdList::New();
     vtkDoubleArray* array_ = vtkDoubleArray::New();
     
-    array_->SetNumberOfComponents(numberOfComponents_-3); // on enlève les 3 coordonnées
+    array_->SetNumberOfComponents(numberOfComponents_-3); // -3 on enlève les 3 coordonnées
     array_->SetNumberOfTuples(vertexData_.size()); 
   
     for(unsigned i = 0; i < vertexData_.size(); i++)
