@@ -19,6 +19,8 @@
 
 
 #include  "IsoSurfacer.h"
+#include <algorithm>
+#include <iostream>
 
 // vtkCxxRevisionMacro(IsoSurfacer, "$Revision$");
 vtkStandardNewMacro(IsoSurfacer);
@@ -52,7 +54,6 @@ int IsoSurfacer::ComputePartialIntersection(const int &tetId){
 int IsoSurfacer::ComputeSimpleIntersection(vtkCell *tet){
     
     pair<vtkIdType, vtkIdType> edge; 
-    
     vector<double> pt_intersection(3); 
     vtkIdList* pointIds = vtkIdList::New();
     int id = 0; 
@@ -65,7 +66,7 @@ int IsoSurfacer::ComputeSimpleIntersection(vtkCell *tet){
             edge.second = tet->GetEdge(i)->GetPointId(1); // Id point b de l'arête
             edge_intersected.push_back(edge); //on stocke les points {a,b} des edges qui sont intersecté
         }
-
+        
     ReOrderTetEdges(edge_intersected); 
     
     for(int i = 0; i<edge_intersected.size(); i++) // on calcul tout les points d'intersection
@@ -86,10 +87,32 @@ int IsoSurfacer::FastExtraction(){
   return 0;
 }
 
-int IsoSurfacer::ReOrderTetEdges(
-  vector<pair<vtkIdType, vtkIdType> > &edgeList) const{
-
-  return 0;
+int IsoSurfacer::ReOrderTetEdges(vector<pair<vtkIdType, vtkIdType> > &edgeList) const{
+    
+    pair<vtkIdType, vtkIdType> temp; 
+    cout<< "ReOrderTetEdges"<<endl;
+    int cpt = 1;
+    //swap std
+    while(cpt != 0){
+        for(int i = 0; i<edgeList.size(); i++){
+            vtkIdType e1_f = edgeList[i].first;
+            vtkIdType e1_s = edgeList[i].second;
+            vtkIdType e2_f = edgeList[i+1].first;
+            vtkIdType e2_s = edgeList[i+1].second;
+            if(e1_f!=e2_s && e1_f!=e2_f && e1_s!=e2_s && e1_s!=e2_f){
+                cout << "la"<< endl;
+                temp = edgeList[i];
+                std::swap(&edgeList[i],&edgeList[i+1]);
+                cpt -= 1;
+            }
+        }
+        if(cpt <=0){
+            cpt = 1;
+        }
+        else
+            cpt = 0;
+    }
+    return 0;
 }
 
 int IsoSurfacer::SimpleExtraction(){
