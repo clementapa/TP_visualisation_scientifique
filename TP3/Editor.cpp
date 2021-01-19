@@ -115,21 +115,28 @@ int Editor::deleteIsoSurface(const int &isoSurfaceId){
 }
 
 IsoSurfacer* Editor::extractIsoSurface(const double &isoValue){
-
-  return NULL;
+    
+  IsoSurfacer* grid = IsoSurfacer::New(); 
+  grid -> SetInput(inputMesh_);
+  grid -> SetValue(isoValue); 
+  grid -> SetType(type_);
+  grid -> Update();
+  
+  return grid;
 }
 
 vtkContourGrid* Editor::extractIsoSurfaceVTK(const double &isoValue){
 
   DebugTimer t;
-
-  
-  
+  vtkContourGrid* grid = vtkContourGrid::New();
+  grid -> SetInputData(inputMesh_);
+  grid -> SetValue(0,isoValue); 
+  grid -> Update();
   
   cout << "[Editor] Isosurface extracted in " << t.getElapsedTime()
     << " s." << endl;
 
-  return NULL;
+  return grid;
 }
 
 vtkPolyData* Editor::getIsoSurface(const int &isoSurfaceId) const{

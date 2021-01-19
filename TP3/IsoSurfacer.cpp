@@ -50,8 +50,35 @@ int IsoSurfacer::ComputePartialIntersection(const int &tetId){
 }
 
 int IsoSurfacer::ComputeSimpleIntersection(vtkCell *tet){
+    
+    pair<vtkIdType, vtkIdType> edge; 
+    
+    vector<double> pt_intersection(3); 
+    vtkIdList* pointIds = vtkIdList::New();
+    int id = 0; 
+    vector<pair<vtkIdType,vtkIdType> > edge_intersected; 
+    
+    for(int i = 0; i< tet->GetNumberOfEdges(); i++) // on parcourt tout les edges du tetrahedron
+        if (IsCellOnLevelSet(tet->GetEdge(i))) //si on a une intersection
+        {
+            edge.first = tet->GetEdge(i)->GetPointId(0); // Id point a de l'arête
+            edge.second = tet->GetEdge(i)->GetPointId(1); // Id point b de l'arête
+            edge_intersected.push_back(edge); //on stocke les points {a,b} des edges qui sont intersecté
+        }
 
-  return 0;
+    ReOrderTetEdges(edge_intersected); 
+    
+    for(int i = 0; i<edge_intersected.size(); i++) // on calcul tout les points d'intersection
+    {
+        pt_intersection = ComputeEdgeIntersection(edge_intersected[i]);
+        id = Output->GetPoints()->InsertNextPoint(pt_intersection[0],pt_intersection[1],pt_intersection[2]);  
+        pointIds->InsertNextId(id); // ajoute l'id du point pour pouvoir créer le polygone à la fin 
+    }
+        
+    Output->InsertNextCell(VTK_POLYGON, pointIds); 
+    
+    pointIds->Delete();
+    return 0;
 }
 
 int IsoSurfacer::FastExtraction(){
@@ -66,8 +93,16 @@ int IsoSurfacer::ReOrderTetEdges(
 }
 
 int IsoSurfacer::SimpleExtraction(){
-  
-  return 0;
+    
+    vtkCell* cell; 
+    for(int i = 0; i < Input->GetNumberOfCells(); i++){
+        cell = Input->GetCell(i);
+        if(IsCellOnLevelSet(cell))
+            ComputeSimpleIntersection(cell);
+    }
+    
+    cell->Delete();
+    return 0;
 }
 
 int IsoSurfacer::StandardExtraction(){

@@ -74,12 +74,26 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     IsoSurfacer();
     ~IsoSurfacer();
     
-    inline vector<double> ComputeEdgeIntersection(
-      pair<vtkIdType, vtkIdType> &edge) const{
-    
-      vector<double> p(3);
+    inline vector<double> ComputeEdgeIntersection(pair<vtkIdType, vtkIdType> &edge) const{
+        
+        // recuperation des coordonnées des deux sommets de l'arête
+        double* a = Input->GetPoints()->GetPoint(edge.first); 
+        double* b = Input->GetPoints()->GetPoint(edge.second); 
+        
+        // recuperation des valeurs scalaires
+        double scalar_a; 
+        scalarField_->GetTuple(edge.first,&scalar_a); 
+        double scalar_b; 
+        scalarField_->GetTuple(edge.second,&scalar_b); 
+        
+        double coeff = (Value - scalar_a)/(scalar_b - scalar_a); // pour calculer les coordonnées
+        
+        vector<double> p(3);
+        p[0] = a[0] + coeff * (b[0]-a[0]); 
+        p[1] = a[1] + coeff * (b[1]-a[1]);
+        p[2] = a[2] + coeff * (b[2]-a[2]);
       
-      return p;
+        return p;
     };
     
     int ComputePartialIntersection(const int &tetId);
@@ -89,7 +103,26 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     int FastExtraction(); 
     
     inline bool IsCellOnLevelSet(vtkCell *cell) const{
-      return false;
+    
+        double min_pt_cell; 
+        double max_pt_cell; 
+        
+        int vertex_nb = cell->GetNumberOfPoints(); // on recup le nb de pt dans la cellule
+        scalarField_->SetNumberOfTuples(vertex_nb);
+        
+        double Values[vertex_nb]; 
+        
+        // recuperation des valeurs scalaires des points de la cellule
+        for(int i=0;i<vertex_nb;i++)
+            scalarField_->GetTuple(cell->GetPointIds()->GetId(i),&Values[i]);
+        
+        min_pt_cell = *(std::min_element(Values,Values+vertex_nb));
+        max_pt_cell = *(std::max_element(Values,Values+vertex_nb));
+        
+        if(Value >= min_pt_cell && Value <= max_pt_cell)
+            return true; 
+        else 
+            return false;  
     };
 
     int ReOrderTetEdges(vector<pair<vtkIdType, vtkIdType> > &edgeList) const;
