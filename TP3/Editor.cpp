@@ -120,6 +120,7 @@ IsoSurfacer* Editor::extractIsoSurface(const double &isoValue){
   grid -> SetInput(inputMesh_);
   grid -> SetValue(isoValue); 
   grid -> SetType(type_);
+  grid -> SetNeighbors(&tetNeighbors_);
   grid -> Update();
   
   return grid;
@@ -149,26 +150,43 @@ vtkPolyData* Editor::getIsoSurface(const int &isoSurfaceId) const{
 
 int Editor::loadInputMesh (const string &fileName){
 
-  meshReader_ = vtkXMLUnstructuredGridReader::New();
+    meshReader_ = vtkXMLUnstructuredGridReader::New();
 
-  meshReader_->SetFileName(fileName.data());  
-  
-  cout << "[Editor] Reading input mesh..." << endl;
- 
-  meshReader_->Update();
-  
-  inputMesh_ = meshReader_->GetOutput();
-  
-  // force the usage of the first array as scalar data
-  inputMesh_->GetPointData()->SetScalars(
-    inputMesh_->GetPointData()->GetArray(0));
-  
-  inputMesh_->BuildLinks();
-  
-  cout << "[Editor]   done! (read " << inputMesh_->GetNumberOfCells() 
-    << " cells)" << endl;
-  
-  return 0;
+    meshReader_->SetFileName(fileName.data());  
+    
+    cout << "[Editor] Reading input mesh..." << endl;
+    
+    meshReader_->Update();
+    
+    inputMesh_ = meshReader_->GetOutput();
+    
+    // force the usage of the first array as scalar data
+    inputMesh_->GetPointData()->SetScalars(
+        inputMesh_->GetPointData()->GetArray(0));
+    
+    inputMesh_->BuildLinks();
+    
+    vector <vtkIdType> neighbors; 
+    vtkIdList* cellPointIds = vtkIdList::New(); 
+    vtkIdList* neighborCellIds = vtkIdList::New(); 
+    
+    for (vtkIdType i = 0; i < inputMesh_->GetNumberOfCells(); i++) {
+        for(vtkIdType j = 0; j < inputMesh_->GetCell(i)->GetNumberOfEdges(); j++) {
+            cellPointIds = inputMesh_->GetCell(i)->GetEdge(j)->GetPointIds();
+            inputMesh_->GetCellNeighbors(i, cellPointIds, neighborCellIds);// on recupere les id des voisins du tétrahedre i 
+
+            for(vtkIdType k = 0; k < neighborCellIds->GetNumberOfIds(); k++)
+                neighbors.push_back(neighborCellIds->GetId(k));
+        }
+    }
+    sort(neighbors.begin(), neighbors.end());
+    neighbors.erase(unique(neighbors.begin(), neighbors.end()), neighbors.end());
+    tetNeighbors_.push_back(neighbors);
+        
+    cout << "[Editor]   done! (read " << inputMesh_->GetNumberOfCells() 
+        << " cells)" << endl;
+    
+    return 0;
 }
 
 int Editor::moveIsoSurface(const int& isoSurfaceId, const double &shift,

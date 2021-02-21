@@ -109,7 +109,7 @@ class Editor{
     vector<vtkPolyData *>         isoSurfaceList_;
     
     // traversal speed-up
-    vector<vector<vtkIdType> >    tetNeighbors_;
+    vector<vector<vtkIdType>>    tetNeighbors_;
     
     // seeds speed up
     TetIndex                      tetIndex_;

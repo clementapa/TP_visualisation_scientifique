@@ -38,18 +38,30 @@ enum extractionType {SIMPLE, STANDARD, FAST};
 
 class TetIndex{
  
-  public:
-    
+    public:
+        
     TetIndex(){
-    };
+        };
+        
+    protected:
+        
+    int Fmin;
+    int Fmax;
+    int global;
     
-  protected:
+    vector<pair<int,int>> span;
     
+    void setBounds(int glob, int min, int max); //store the global function range (global and minimum and maximum) passed as argument
+    void setResolution(int size); //sets size of the table (passed as argument)
+    void addTet(vector<pair<int,int>> span, int IdTetra); //given the function span and the Id of a tetrahedron (passed as arguments), stores the tet Id in the table
+    void getCandidates(int isovalue); // returns a pointer to the corresponding interval (returns a pointer of a vector of tetrahedron Ids).
 };
 
 class EdgeIntersection {
   
   public:
+    pair<vtkIdType, vtkIdType> Edge; 
+    vtkIdType VertexId;
     
 };
 
@@ -65,6 +77,8 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     vtkSetMacro(Input, vtkUnstructuredGrid *);
     vtkSetMacro(Type, extractionType);
     
+    vtkSetMacro(Neighbors, vector<vector<vtkIdType>>*); //q18
+    
     vtkGetMacro(Output, vtkPolyData *);
    
     void Update();
@@ -77,8 +91,10 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     inline vector<double> ComputeEdgeIntersection(pair<vtkIdType, vtkIdType> &edge) const{
         
         // recuperation des coordonnées des deux sommets de l'arête
-        double* a = Input->GetPoints()->GetPoint(edge.first); 
-        double* b = Input->GetPoints()->GetPoint(edge.second); 
+        double a[3];
+        double b[3];
+        Input->GetPoints()->GetPoint(edge.first, a);
+        Input->GetPoints()->GetPoint(edge.second, b);
         
         // recuperation des valeurs scalaires
         double scalar_a; 
@@ -89,10 +105,9 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
         double coeff = (Value - scalar_a)/(scalar_b - scalar_a); // pour calculer les coordonnées
         
         vector<double> p(3);
-        p[0] = a[0] + coeff * (b[0]-a[0]); 
-        p[1] = a[1] + coeff * (b[1]-a[1]);
-        p[2] = a[2] + coeff * (b[2]-a[2]);
-      
+        for(int i = 0; i < p.size(); i++)
+            p[i] = a[i] + coeff * (b[i]-a[i]); 
+ 
         return p;
     };
     
@@ -108,8 +123,7 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
         double max_pt_cell; 
         
         int vertex_nb = cell->GetNumberOfPoints(); // on recup le nb de pt dans la cellule
-        scalarField_->SetNumberOfTuples(vertex_nb);
-        
+
         double Values[vertex_nb]; 
         
         // recuperation des valeurs scalaires des points de la cellule
@@ -136,6 +150,10 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     vtkPolyData                       *Output;
     extractionType                    Type;
     double                            Value;
+    // traversal speed-up q18
+    vector<vector<vtkIdType>>         *Neighbors;
+    
+    vector<vector<EdgeIntersection>>  Edges;
     
     // internal variables
     vtkPoints                         *pointSet_;

@@ -1,0 +1,11 @@
+#q2
+vtkContourGrid* Editor::extractIsoSurfaceVTK(const double &isoValue)
+#q4
+fusion de composante connexe
+#q5
+separation de composante connexe 
+#q6
+min : creation
+col : fusion /separation
+max : destruction
+topological change : fusion, division, destruction

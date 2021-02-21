@@ -47,8 +47,38 @@ IsoSurfacer::~IsoSurfacer(){
 }
 
 int IsoSurfacer::ComputePartialIntersection(const int &tetId){
-
-  return 0;
+    cout<<"laaaa"<<endl;
+    
+    pair<vtkIdType, vtkIdType> edge;
+    vector<double> pt_intersection(3); 
+    vtkIdList* pointIds = vtkIdList::New();
+    int id = 0; 
+    
+    vector<pair<vtkIdType,vtkIdType> > edge_intersected;
+    
+    for(int i = 0; i < Input->GetCell(tetId)->GetNumberOfEdges(); i++){ // on parcourt tout les edges du tetrahedron
+        if (IsCellOnLevelSet(Input->GetCell(tetId)->GetEdge(i))){ //si on a une intersection
+            if(Input->GetCell(tetId)->GetEdge(i)->GetPointId(0)<Input->GetCell(tetId)->GetEdge(i)->GetPointId(1))
+                edge = make_pair(Input->GetCell(tetId)->GetEdge(i)->GetPointId(0), Input->GetCell(tetId)->GetEdge(i)->GetPointId(1)); //on stocke les deux points a et b 
+            else
+                edge = make_pair(Input->GetCell(tetId)->GetEdge(i)->GetPointId(1), Input->GetCell(tetId)->GetEdge(i)->GetPointId(0));
+            for(int j = 0; j < (*Neighbors)[tetId].size(); j++){
+                int tetra_Neighbors = (*Neighbors)[tetId][j];
+                for(int k = 0; k < Edges[tetra_Neighbors].size(); k++){
+                    if(Edges[(*Neighbors)[tetId][j]][k].Edge.first==edge.first && Edges[(*Neighbors)[tetId][j]][k].Edge.second==edge.second){
+                        edge_intersected.push_back(edge);    
+                        id = Edges[tetra_Neighbors][k].VertexId;
+                        break;    
+                    }
+                }
+            }
+            ReOrderTetEdges(edge_intersected); 
+        }
+    }
+    Output->InsertNextCell(VTK_POLYGON, pointIds);
+    
+    pointIds->Delete();
+    return 0;
 }
 
 int IsoSurfacer::ComputeSimpleIntersection(vtkCell *tet){
@@ -57,6 +87,7 @@ int IsoSurfacer::ComputeSimpleIntersection(vtkCell *tet){
     vector<double> pt_intersection(3); 
     vtkIdList* pointIds = vtkIdList::New();
     int id = 0; 
+    
     vector<pair<vtkIdType,vtkIdType> > edge_intersected; 
     
     for(int i = 0; i< tet->GetNumberOfEdges(); i++) // on parcourt tout les edges du tetrahedron
@@ -90,27 +121,17 @@ int IsoSurfacer::FastExtraction(){
 int IsoSurfacer::ReOrderTetEdges(vector<pair<vtkIdType, vtkIdType> > &edgeList) const{
     
     pair<vtkIdType, vtkIdType> temp; 
-    cout<< "ReOrderTetEdges"<<endl;
-    int cpt = 1;
-    //swap std
-    while(cpt != 0){
-        for(int i = 0; i<edgeList.size(); i++){
-            vtkIdType e1_f = edgeList[i].first;
-            vtkIdType e1_s = edgeList[i].second;
-            vtkIdType e2_f = edgeList[i+1].first;
-            vtkIdType e2_s = edgeList[i+1].second;
-            if(e1_f!=e2_s && e1_f!=e2_f && e1_s!=e2_s && e1_s!=e2_f){
-                cout << "la"<< endl;
-                temp = edgeList[i];
-                std::swap(&edgeList[i],&edgeList[i+1]);
-                cpt -= 1;
-            }
+
+    for(int i = 0; i<edgeList.size(); i++){
+        vtkIdType e1_f = edgeList[i].first;
+        vtkIdType e1_s = edgeList[i].second;
+        vtkIdType e2_f = edgeList[i+1].first;
+        vtkIdType e2_s = edgeList[i+1].second;
+        if(e1_f!=e2_s && e1_f!=e2_f && e1_s!=e2_s && e1_s!=e2_f){
+            temp = edgeList[i]; 
+            edgeList.erase(edgeList.begin()+i);
+            edgeList.push_back(temp); 
         }
-        if(cpt <=0){
-            cpt = 1;
-        }
-        else
-            cpt = 0;
     }
     return 0;
 }
@@ -129,8 +150,17 @@ int IsoSurfacer::SimpleExtraction(){
 }
 
 int IsoSurfacer::StandardExtraction(){
-  
-  return 0;
+    cout<<"laaaa standard extraction"<<endl;
+    vtkCell* cell; 
+    for(int i = 0; i < Input->GetNumberOfCells(); i++){
+        cout<<i<<endl;
+        cell = Input->GetCell(i);
+        if(IsCellOnLevelSet(cell))
+            ComputePartialIntersection(i);
+    }
+
+    cell->Delete();
+    return 0;
 }
 
 void IsoSurfacer::Update(){
@@ -200,3 +230,16 @@ void IsoSurfacer::Update(){
     fakeScalars_->SetComponent(i, 0, Value);
 }
 
+void TetIndex::setBounds(int glob, int min, int max){
+    global = glob;
+    Fmin = min;
+    Fmax = max;
+}
+
+void TetIndex::setResolution(int size){
+    span.resize(size);
+}
+
+void TetIndex::addTet(vector<pair<int,int>> span, int IdTetra){
+    
+}
