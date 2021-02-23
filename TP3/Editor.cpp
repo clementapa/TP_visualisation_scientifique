@@ -121,6 +121,7 @@ IsoSurfacer* Editor::extractIsoSurface(const double &isoValue){
   grid -> SetValue(isoValue); 
   grid -> SetType(type_);
   grid -> SetNeighbors(&tetNeighbors_);
+  grid -> SetIndex(&tetIndex_);
   grid -> Update();
   
   return grid;
@@ -174,17 +175,32 @@ int Editor::loadInputMesh (const string &fileName){
         for(vtkIdType j = 0; j < inputMesh_->GetCell(i)->GetNumberOfEdges(); j++) {
             cellPointIds = inputMesh_->GetCell(i)->GetEdge(j)->GetPointIds();
             inputMesh_->GetCellNeighbors(i, cellPointIds, neighborCellIds);// on recupere les id des voisins du tétrahedre i 
-
-            for(vtkIdType k = 0; k < neighborCellIds->GetNumberOfIds(); k++)
-                neighbors.push_back(neighborCellIds->GetId(k));
+            for(vtkIdType k = 0; k < neighborCellIds->GetNumberOfIds(); k++) neighbors.push_back(neighborCellIds->GetId(k));
         }
     }
+    
     sort(neighbors.begin(), neighbors.end());
     neighbors.erase(unique(neighbors.begin(), neighbors.end()), neighbors.end());
     tetNeighbors_.push_back(neighbors);
-        
-    cout << "[Editor]   done! (read " << inputMesh_->GetNumberOfCells() 
-        << " cells)" << endl;
+
+
+    // Question 29
+    double  scalarValue,min, max;
+    vtkDataArray *scalarField = inputMesh_->GetPointData()->GetScalars();
+    double *span = inputMesh_->GetScalarRange();
+    tetIndex_.setBounds(span[0], span[1]);
+    tetIndex_.setResolution(500);
+    for(int i = 0; i < inputMesh_->GetNumberOfCells(); i++){
+      vtkIdList *pointList = inputMesh_->GetCell(i)->GetPointIds();
+      for(int j = 0; j < 4; j++){
+        scalarValue = scalarField->GetComponent(pointList->GetId(j), 0);
+        if((!j)||(scalarValue < min)) min = scalarValue;
+        if((!j)||(scalarValue > max)) max = scalarValue;
+      }
+    tetIndex_.addTet(min, max, i);
+    }
+    
+    cout << "[Editor]   done! (read " << inputMesh_->GetNumberOfCells() << " cells)" << endl;
     
     return 0;
 }

@@ -41,20 +41,21 @@ class TetIndex{
     public:
         
     TetIndex(){
-        };
-        
-    protected:
-        
-    int Fmin;
-    int Fmax;
-    int global;
     
-    vector<pair<int,int>> span;
+    };
     
-    void setBounds(int glob, int min, int max); //store the global function range (global and minimum and maximum) passed as argument
+    
+    void setBounds(float min, float max); //store the global function range (global and minimum and maximum) passed as argument
     void setResolution(int size); //sets size of the table (passed as argument)
-    void addTet(vector<pair<int,int>> span, int IdTetra); //given the function span and the Id of a tetrahedron (passed as arguments), stores the tet Id in the table
-    void getCandidates(int isovalue); // returns a pointer to the corresponding interval (returns a pointer of a vector of tetrahedron Ids).
+    void addTet(float min, float max, vtkIdType IdTetra); //given the function span and the Id of a tetrahedron (passed as arguments), stores the tet Id in the table
+    vector<vtkIdType>* getCandidates(float isovalue); // returns a pointer to the corresponding interval (returns a pointer of a vector of tetrahedron Ids).
+
+    protected:
+      float Fmin;
+      float Fmax;
+      int resolution;
+      vector<vector<vtkIdType>> list_interval;
+    
 };
 
 class EdgeIntersection {
@@ -79,10 +80,12 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     
     vtkSetMacro(Neighbors, vector<vector<vtkIdType>>*); //q18
     
+    vtkSetMacro(FastIndex, TetIndex*);
+
     vtkGetMacro(Output, vtkPolyData *);
    
     void Update();
-  
+
   protected:
     
     IsoSurfacer();
@@ -155,6 +158,8 @@ class VTK_EXPORT IsoSurfacer : public vtkAlgorithm {
     
     vector<vector<EdgeIntersection>>  Edges;
     
+    TetIndex                          *FastIndex;
+
     // internal variables
     vtkPoints                         *pointSet_;
     vtkCellArray                      *cellArray_;
