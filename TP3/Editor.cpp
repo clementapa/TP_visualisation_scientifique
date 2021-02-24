@@ -18,6 +18,8 @@
 */
 
 
+// Fait par Clément Apavou et Arthur Zucker
+
 #include  "Editor.h"
 
 Editor::Editor(){
