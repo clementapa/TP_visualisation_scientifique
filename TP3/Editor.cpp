@@ -121,7 +121,7 @@ IsoSurfacer* Editor::extractIsoSurface(const double &isoValue){
   grid -> SetValue(isoValue); 
   grid -> SetType(type_);
   grid -> SetNeighbors(&tetNeighbors_);
-  grid -> SetIndex(&tetIndex_);
+  grid -> SetFastIndex(&tetIndex_);
   grid -> Update();
   
   return grid;
